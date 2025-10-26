@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>线扫镜头选型工具</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="lensDatabase.js"></script>
+    <script src="magnificationTables.js"></script>
+    <style>
+        .input-focus {
+            @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none;
+        }
+        .lens-card {
+            @apply bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg;
+        }
+        .filter-btn {
+            @apply px-3 py-1 rounded-md transition-all duration-200 hover:bg-blue-100 text-sm;
+        }
+        .filter-btn.active {
+            @apply bg-blue-500 text-white;
+        }
+        .tab-active {
+            @apply border-blue-500 text-blue-600 font-medium;
+        }
+        .magnification-table {
+            @apply w-full text-sm text-left text-gray-700 border-collapse;
+        }
+        .magnification-table th {
+            @apply bg-blue-50 text-blue-700 font-semibold p-2 border border-blue-200;
+        }
+        .magnification-table td {
+            @apply p-2 border border-gray-200;
+        }
+        .magnification-table tr:nth-child(even) {
+            @apply bg-gray-50;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+    <header class="bg-blue-600 text-white shadow-md">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold">线扫镜头选型工具</h1>
+                    <p class="mt-1 text-blue-100">专业线阵工业镜头智能选型系统</p>
+                </div>
+                <div class="mt-4 md:mt-0 flex items-center text-sm">
+                    <i class="fa fa-headphones mr-2"></i>
+                    <span>技术支持: 0512-50160763</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- 输入参数区域 -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                            <i class="fa fa-sliders"></i>
+                        </div>
+                        <h2 class="text-xl font-bold ml-3">选型参数</h2>
+                    </div>
+                    
+                    <div class="space-y-5">
+                        <!-- 相机规格选择 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">线扫相机规格</label>
+                            <select class="w-full p-3 border border-gray-300 rounded-lg input-focus" id="cameraSpec">
+                                <option value="">请选择相机规格</option>
+                                <option value="4K7u">4K7μm</option>
+                                <option value="8K5u">8K5μm</option>
+                                <option value="8K7u">8K7μm</option>
+                                <option value="12K5u">12K5μm</option>
+                                <option value="16K3.5u">16K3.5μm</option>
+                                <option value="16K5u">16K5μm</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 视野大小输入 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">视野大小 (mm)</label>
+                            <input class="w-full p-3 border border-gray-300 rounded-lg input-focus" id="fieldOfView" placeholder="请输入视野大小" type="number"/>
+                            <p class="text-xs text-gray-500 mt-1">输入所需的视野范围，单位：毫米</p>
+                        </div>
+                        
+                        <!-- 接口类型选择 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">接口类型</label>
+                            <select class="w-full p-3 border border-gray-300 rounded-lg input-focus" id="mountType">
+                                <option value="">请选择接口类型</option>
+                                <option value="M42">M42</option>
+                                <option value="M58">M58</option>
+                                <option value="M72">M72</option>
+                                <option value="M90">M90</option>
+                                <option value="M95">M95</option>
+                                <option value="F">F卡口</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 工作距离筛选 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">工作距离范围 (mm)</label>
+                            <div class="flex space-x-2">
+                                <input class="w-1/2 p-3 border border-gray-300 rounded-lg input-focus" id="minWorkingDistance" placeholder="最小WD" type="number" min="0"/>
+                                <input class="w-1/2 p-3 border border-gray-300 rounded-lg input-focus" id="maxWorkingDistance" placeholder="最大WD" type="number" min="0"/>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">可选，筛选特定工作距离范围的镜头</p>
+                        </div>
+                        
+                        <!-- 推荐按钮 -->
+                        <button onclick="recommendLens()" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition duration-300 flex items-center justify-center mt-4">
+                            <i class="fa fa-search mr-2"></i>
+                            智能推荐镜头
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 选型说明 -->
+                <div class="bg-blue-50 rounded-lg p-5 mt-6 border border-blue-200">
+                    <div class="flex items-center mb-3">
+                        <i class="fa fa-info-circle text-blue-600"></i>
+                        <h3 class="font-semibold text-blue-600 ml-2">选型说明</h3>
+                    </div>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-blue-600 mt-1 mr-2 text-xs"></i>
+                            <span>镜头支持向下兼容，高分辨率镜头可用于低分辨率相机</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-blue-600 mt-1 mr-2 text-xs"></i>
+                            <span>倍率 = 芯片长度 / 视野大小</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-blue-600 mt-1 mr-2 text-xs"></i>
+                            <span>工作距离根据倍率和镜头参数自动计算</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fa fa-check-circle text-blue-600 mt-1 mr-2 text-xs"></i>
+                            <span>镜头的最大像面必须大于相机的芯片尺寸</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- 结果与数据库区域 -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <!-- 标签页导航 -->
+                    <div class="flex border-b border-gray-200 mb-6">
+                        <button id="tabRecommend" onclick="switchTab('recommend')" class="pb-3 px-4 border-b-2 tab-active">
+                            <i class="fa fa-lightbulb-o mr-1"></i> 智能推荐
+                        </button>
+                        <button id="tabDatabase" onclick="switchTab('database')" class="pb-3 px-4 border-b-2 border-transparent text-gray-500">
+                            <i class="fa fa-database mr-1"></i> 镜头数据库
+                        </button>
+                        <button id="tabMagnification" onclick="switchTab('magnification')" class="pb-3 px-4 border-b-2 border-transparent text-gray-500">
+                            <i class="fa fa-table mr-1"></i> 倍率表查询
+                        </button>
+                    </div>
+                    
+                    <!-- 智能推荐内容区 -->
+                    <div id="contentRecommend" class="space-y-4">
+                        <div class="text-center py-16 text-gray-500" id="initialRecommend">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fa fa-search text-2xl text-gray-400"></i>
+                            </div>
+                            <p class="text-lg">请输入选型参数，点击推荐按钮获取镜头建议</p>
+                            <p class="text-sm mt-2 text-gray-400">系统将根据您的参数智能匹配最合适的镜头型号</p>
+                        </div>
+                        <div id="resultsRecommend" class="hidden space-y-4"></div>
+                    </div>
+                    
+                    <!-- 镜头数据库内容区 -->
+                    <div id="contentDatabase" class="hidden space-y-6">
+                        <!-- 数据库筛选区 -->
+                        <div class="space-y-4">
+                            <!-- 搜索 -->
+                            <div class="flex flex-col md:flex-row gap-4 items-stretch">
+                                <div class="relative flex-1">
+                                    <input 
+                                        type="text" 
+                                        id="searchInput" 
+                                        placeholder="搜索镜头型号、焦距、光圈..." 
+                                        class="w-full px-4 py-3 rounded-lg border border-gray-300 input-focus"
+                                    >
+                                    <i class="fa fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                <div class="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-3 py-2">
+                                    <span class="text-sm text-gray-700">排序:</span>
+                                    <select id="sortSelect" class="border-0 focus:ring-0 text-sm">
+                                        <option value="model">按型号</option>
+                                        <option value="focalLength">按焦距</option>
+                                        <option value="maxAperture">按最大光圈</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <!-- 工作距离筛选 -->
+                            <div class="flex flex-wrap gap-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-700">工作距离:</span>
+                                    <input 
+                                        type="number" 
+                                        id="dbMinWD" 
+                                        placeholder="最小" 
+                                        class="w-20 px-3 py-2 border border-gray-300 rounded-lg input-focus text-sm"
+                                    >
+                                    <span class="text-gray-500">-</span>
+                                    <input 
+                                        type="number" 
+                                        id="dbMaxWD" 
+                                        placeholder="最大" 
+                                        class="w-20 px-3 py-2 border border-gray-300 rounded-lg input-focus text-sm"
+                                    >
+                                    <span class="text-sm text-gray-500">mm</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 结果统计 -->
+                            <div class="flex justify-between items-center text-sm">
+                                <p class="text-gray-500"><span id="resultCount">0</span> 个镜头</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 数据库结果区 -->
+                        <div id="resultsDatabase" class="space-y-4">
+                            <!-- 加载状态 -->
+                            <div id="loadingDatabase" class="flex justify-center items-center py-16">
+                                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+                            </div>
+                            
+                            <!-- 空状态 -->
+                            <div id="emptyDatabase" class="hidden text-center py-16">
+                                <i class="fa fa-search-minus text-5xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-500 text-lg">未找到匹配的镜头</p>
+                                <p class="text-sm text-gray-400 mt-2">请调整筛选条件或搜索关键词</p>
+                            </div>
+                            
+                            <!-- 镜头列表 -->
+                            <div id="lensList" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 倍率表查询内容区 -->
+                    <div id="contentMagnification" class="hidden space-y-6">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold">镜头倍率表查询</h3>
+                            <div class="flex gap-2">
+                                <div class="relative">
+                                    <input 
+                                        type="text" 
+                                        id="magnificationLensSearch" 
+                                        placeholder="搜索镜头型号..." 
+                                        class="w-64 px-4 py-2 rounded-lg border border-gray-300 input-focus"
+                                    >
+                                    <i class="fa fa-search absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                </div>
+                                <select id="magnificationLensSelect" class="px-3 py-2 border border-gray-300 rounded-lg input-focus">
+                                    <option value="">选择镜头型号</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="magnificationTableContainer" class="hidden">
+                            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                                <table class="magnification-table">
+                                    <thead>
+                                        <tr>
+                                            <th>工作距离 (mm)</th>
+                                            <th>放大倍率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="magnificationTableBody"></tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <canvas id="magnificationChart" height="300"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div id="noMagnificationData" class="text-center py-16 hidden">
+                            <i class="fa fa-table text-5xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-500 text-lg">请选择镜头型号查看倍率表</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 py-4 text-center text-gray-600 text-sm">
+        苏州嘉励-技术支持部-开发 © 2025
+    </footer>
+    
+    <script>
+        // 相机芯片长度配置
+        const cameraChipLength = {
+            "4K7u": 4000 * 0.007, // 28mm
+            "8K5u": 8000 * 0.005, // 40mm
+            "8K7u": 8000 * 0.007, // 56mm
+            "12K5u": 12000 * 0.005, // 60mm
+            "16K3.5u": 16000 * 0.0035, // 56mm
+            "16K5u": 16000 * 0.005 // 80mm
+        };
+
+        // 兼容性规则
+        const compatibilityRules = {
+            "4K7u": ["4K7U", "8K5U", "8K7U", "12K5U", "16K3.5U", "16K5U"],
+            "8K5u": ["8K5U", "8K7U", "12K5U", "16K3.5U", "16K5U"],
+            "8K7u": ["8K7U", "12K5U", "16K3.5U", "16K5U"],
+            "12K5u": ["12K5U", "16K3.5U", "16K5U"],
+            "16K3.5u": ["16K3.5U", "16K5U"],
+            "16K5u": ["16K5U"]
+        };
+
+        // 标签页切换
+        function switchTab(tabName) {
+            document.getElementById('contentRecommend').classList.add('hidden');
+            document.getElementById('contentDatabase').classList.add('hidden');
+            document.getElementById('contentMagnification').classList.add('hidden');
+            document.getElementById('tabRecommend').classList.remove('tab-active');
+            document.getElementById('tabDatabase').classList.remove('tab-active');
+            document.getElementById('tabMagnification').classList.remove('tab-active');
+            
+            if (tabName === 'recommend') {
+                document.getElementById('contentRecommend').classList.remove('hidden');
+                document.getElementById('tabRecommend').classList.add('tab-active');
+            } else if (tabName === 'database') {
+                document.getElementById('contentDatabase').classList.remove('hidden');
+                document.getElementById('tabDatabase').classList.add('tab-active');
+                if (!window.databaseInited) {
+                    initDatabase();
+                    window.databaseInited = true;
+                }
+            } else if (tabName === 'magnification') {
+                document.getElementById('contentMagnification').classList.remove('hidden');
+                document.getElementById('tabMagnification').classList.add('tab-active');
+                if (!window.magnificationInited) {
+                    initMagnificationTab();
+                    window.magnificationInited = true;
+                }
+            }
+        }
+
+        // 智能推荐镜头
+        function recommendLens() {
+            const cameraSpec = document.getElementById('cameraSpec').value;
+            const fieldOfView = parseFloat(document.getElementById('fieldOfView').value);
+            const mountType = document.getElementById('mountType').value;
+            const minWD = parseFloat(document.getElementById('minWorkingDistance').value) || 0;
+            const maxWD = parseFloat(document.getElementById('maxWorkingDistance').value) || Infinity;
+            
+            if (!cameraSpec || !fieldOfView || !mountType) {
+                showRecommendError('请填写完整的选型参数');
+                return;
+            }
+            if (fieldOfView <= 0) {
+                showRecommendError('视野大小需大于0');
+                return;
+            }
+            
+            const chipLength = cameraChipLength[cameraSpec];
+            const requiredMagnification = chipLength / fieldOfView;
+            
+            const compatibleSpecs = compatibilityRules[cameraSpec];
+            let allCompatibleLenses = [];
+            
+            compatibleSpecs.forEach(spec => {
+                const lensesForSpec = lensDatabase.filter(lens => lens.series === spec);
+                lensesForSpec.forEach(lens => {
+                    // 筛选匹配接口的镜头
+                    const matchingMounts = lens.mounts.filter(mount => {
+                        // 如果用户选择M42，则匹配M42开头的接口
+                        return mountType === 'M42' ? mount.startsWith('M42') : mount === mountType;
+                    });
+                    
+                    if (matchingMounts.length > 0) {
+                        // 为每个匹配的接口创建单独的镜头记录
+                        matchingMounts.forEach(mount => {
+                            // 创建特定接口的镜头型号
+                            const specificModel = getSpecificMountModel(lens.model, mount);
+                            
+                            // 检查最大像面是否大于芯片尺寸
+                            if (lens.maxImageCircle >= chipLength) {
+                                allCompatibleLenses.push({
+                                    ...lens,
+                                    originalModel: lens.model, // 保存原始型号用于计算
+                                    model: specificModel, // 特定接口型号用于显示
+                                    specificMount: mount,
+                                    series: spec
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+            
+            // 筛选倍率范围合适的镜头
+            const suitableLenses = allCompatibleLenses.filter(lens => {
+                if (!lens.magnificationRange) return true;
+                const [minMag, maxMag] = lens.magnificationRange.split('-').map(Number);
+                return requiredMagnification >= minMag && requiredMagnification <= maxMag;
+            });
+            
+            // 筛选工作距离范围
+            const wdFilteredLenses = suitableLenses.filter(lens => {
+                // 使用原始型号计算工作距离，因为倍率表数据基于原始型号
+                const calculatedWD = calculateWorkingDistance(lens.originalModel, requiredMagnification);
+                return calculatedWD >= minWD && calculatedWD <= maxWD;
+            });
+            
+            wdFilteredLenses.sort((a, b) => {
+                const aDiff = Math.abs(a.centerMagnification - requiredMagnification);
+                const bDiff = Math.abs(b.centerMagnification - requiredMagnification);
+                return aDiff - bDiff;
+            });
+            
+            displayRecommendResults(wdFilteredLenses, fieldOfView, requiredMagnification, cameraSpec, chipLength, minWD, maxWD);
+        }
+
+        // 获取特定接口的镜头型号
+        function getSpecificMountModel(model, mount) {
+            // 如果型号已经包含特定接口，直接返回
+            if (model.includes(mount) && !model.includes('/')) {
+                return model;
+            }
+            
+            // 替换通用接口为特定接口
+            // 例如: JL-JS8040-M42/M58/M72-62-075 + M42 -> JL-JS8040-M42-62-075
+            const modelParts = model.split('-');
+            let resultModel = '';
+            
+            for (let i = 0; i < modelParts.length; i++) {
+                let part = modelParts[i];
+                
+                // 检查是否为接口部分（包含多个接口）
+                if (part.includes('/')) {
+                    const mounts = part.split('/');
+                    // 找到与目标接口匹配的接口
+                    const matchedMount = mounts.find(m => m === mount || (mount === 'M42' && m.startsWith('M42')));
+                    if (matchedMount) {
+                        part = matchedMount;
+                    }
+                }
+                
+                resultModel += part;
+                if (i < modelParts.length - 1) {
+                    resultModel += '-';
+                }
+            }
+            
+            return resultModel;
+        }
+
+        // 显示推荐错误
+        function showRecommendError(message) {
+            const initialEl = document.getElementById('initialRecommend');
+            const resultsEl = document.getElementById('resultsRecommend');
+            
+            initialEl.classList.add('hidden');
+            resultsEl.classList.remove('hidden');
+            resultsEl.innerHTML = `
+                <div class="text-center py-16">
+                    <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa fa-exclamation-circle text-red-400 text-2xl"></i>
+                    </div>
+                    <p class="text-lg font-medium text-red-500">${message}</p>
+                </div>
+            `;
+        }
+
+        // 显示推荐结果
+        function displayRecommendResults(lenses, fov, reqMag, camSpec, chipLen, minWD, maxWD) {
+            const initialEl = document.getElementById('initialRecommend');
+            const resultsEl = document.getElementById('resultsRecommend');
+            
+            initialEl.classList.add('hidden');
+            resultsEl.classList.remove('hidden');
+            
+            if (lenses.length === 0) {
+                let errorMsg = '未找到合适的镜头';
+                if (minWD > 0 || maxWD < Infinity) {
+                    errorMsg += ` (工作距离范围: ${minWD}-${maxWD === Infinity ? '∞' : maxWD}mm)`;
+                }
+                
+                resultsEl.innerHTML = `
+                    <div class="text-center py-16">
+                        <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa fa-exclamation-triangle text-red-400 text-2xl"></i>
+                        </div>
+                        <p class="text-lg font-medium text-red-500">${errorMsg}</p>
+                        <p class="text-sm text-gray-400 mt-2">请调整选型参数或在数据库中手动查找</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            let wdFilterInfo = '';
+            if (minWD > 0 || maxWD < Infinity) {
+                wdFilterInfo = `<div class="flex items-center">
+                    <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                        <i class="fa fa-ruler text-xs"></i>
+                    </div>
+                    <div>
+                        <span class="text-gray-600">工作距离筛选:</span> 
+                        <span class="font-medium ml-1">${minWD}-${maxWD === Infinity ? '∞' : maxWD}mm</span>
+                    </div>
+                </div>`;
+            }
+            
+            let html = `
+                <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 class="font-semibold text-blue-600 mb-3 flex items-center">
+                        <i class="fa fa-calculator mr-2"></i>计算结果
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                <i class="fa fa-camera text-xs"></i>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">相机规格:</span> 
+                                <span class="font-medium ml-1">${camSpec}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                <i class="fa fa-microchip text-xs"></i>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">芯片长度:</span> 
+                                <span class="font-medium ml-1">${chipLen.toFixed(1)}mm</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                <i class="fa fa-arrows-h text-xs"></i>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">视野大小:</span> 
+                                <span class="font-medium ml-1">${fov}mm</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-blue-600 mr-2">
+                                <i class="fa fa-expand text-xs"></i>
+                            </div>
+                            <div>
+                                <span class="text-gray-600">所需倍率:</span> 
+                                <span class="font-medium ml-1">${reqMag.toFixed(3)}</span>
+                            </div>
+                        </div>
+                        ${wdFilterInfo}
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="text-sm text-gray-600">找到 ${lenses.length} 个匹配结果</p>
+                        <p class="text-xs text-blue-600">按匹配度排序</p>
+                    </div>
+            `;
+            
+            lenses.forEach(lens => {
+                const suitScore = calculateSuitability(lens, reqMag);
+                const suitColor = suitScore >= 80 ? 'bg-green-100 text-green-800' : 
+                                 suitScore >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-orange-100 text-orange-800';
+                const suitText = suitScore >= 80 ? '高度推荐' : suitScore >= 60 ? '适合' : '可选';
+                
+                // 计算工作距离 - 使用原始型号
+                const calculatedWD = calculateWorkingDistance(lens.originalModel, reqMag);
+                
+                html += `
+                    <div class="lens-card p-5">
+                        <div class="flex flex-wrap justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">${lens.model}</h3>
+                                <p class="text-xs text-gray-500 mt-1">系列: ${lens.series} | 接口: ${lens.specificMount}</p>
+                            </div>
+                            <div class="flex items-center gap-2 mt-2 sm:mt-0">
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-medium ${suitColor}">
+                                    ${suitText} (${suitScore}%)
+                                </span>
+                                <button onclick="viewMagnificationTable('${lens.originalModel}')" class="text-blue-600 hover:text-blue-800 text-sm flex items-center">
+                                    <i class="fa fa-table mr-1"></i>倍率表
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+                            <div>
+                                <span class="text-gray-600 block text-xs mb-1">焦距</span>
+                                <p class="font-medium">${lens.focalLength}mm</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 block text-xs mb-1">最大光圈</span>
+                                <p class="font-medium text-blue-600">f/${lens.maxAperture}</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 block text-xs mb-1">最大像面</span>
+                                <p class="font-medium">${lens.maxImageCircle}mm</p>
+                            </div>
+                            <div>
+                                <span class="text-gray-600 block text-xs mb-1">所需倍率</span>
+                                <p class="font-medium">${reqMag.toFixed(3)}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2 pt-3 border-t border-gray-200 text-sm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <span class="text-gray-600">计算工作距离:</span>
+                                    <span class="ml-1 font-medium text-blue-600">${calculatedWD}mm</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-600">倍率范围:</span>
+                                    <span class="ml-1">${lens.magnificationRange}</span>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-xs text-gray-500">
+                                工作距离范围: ${lens.workingDistanceRange}mm
+                            </div>
+                            ${!magnificationTables[lens.originalModel] ? 
+                                '<div class="mt-1 text-xs text-red-500">* 该镜头无倍率表数据，使用默认工作距离</div>' : 
+                                ''
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            resultsEl.innerHTML = html;
+        }
+
+        // 计算工作距离 - 基于倍率表数据
+        function calculateWorkingDistance(lensModel, magnification) {
+            // 检查是否有该镜头的倍率表数据
+            if (!magnificationTables[lensModel]) {
+                // 如果没有倍率表数据，返回默认工作距离
+                const lens = lensDatabase.find(l => l.model === lensModel);
+                return lens ? lens.workingDistance : 'N/A';
+            }
+            
+            const table = magnificationTables[lensModel];
+            
+            // 如果正好匹配表中的某个倍率，直接返回对应的工作距离
+            const exactMatch = table.find(item => item.magnification === magnification);
+            if (exactMatch) {
+                return exactMatch.workingDistance;
+            }
+            
+            // 对倍率表按倍率排序（从小到大）
+            const sortedTable = [...table].sort((a, b) => a.magnification - b.magnification);
+            
+            // 检查是否超出范围
+            if (magnification <= sortedTable[0].magnification) {
+                return sortedTable[0].workingDistance;
+            }
+            if (magnification >= sortedTable[sortedTable.length - 1].magnification) {
+                return sortedTable[sortedTable.length - 1].workingDistance;
+            }
+            
+            // 找到目标倍率所在的两个相邻数据点
+            let lowerIndex = 0;
+            let upperIndex = 0;
+            
+            for (let i = 0; i < sortedTable.length - 1; i++) {
+                if (magnification >= sortedTable[i].magnification && magnification <= sortedTable[i + 1].magnification) {
+                    lowerIndex = i;
+                    upperIndex = i + 1;
+                    break;
+                }
+            }
+            
+            // 线性插值计算工作距离
+            const mag1 = sortedTable[lowerIndex].magnification;
+            const wd1 = sortedTable[lowerIndex].workingDistance;
+            const mag2 = sortedTable[upperIndex].magnification;
+            const wd2 = sortedTable[upperIndex].workingDistance;
+            
+            // 工作距离与倍率成反比关系，所以需要反向插值
+            const ratio = (magnification - mag1) / (mag2 - mag1);
+            const workingDistance = wd1 + ratio * (wd2 - wd1);
+            
+            return Math.round(workingDistance * 10) / 10; // 保留1位小数
+        }
+
+        // 计算适配度
+        function calculateSuitability(lens, reqMag) {
+            const magDiff = Math.abs(lens.centerMagnification - reqMag);
+            const maxDiff = Math.max(lens.centerMagnification, reqMag);
+            const similarity = Math.max(0, 100 - (magDiff / maxDiff * 100));
+            return Math.round(similarity);
+        }
+
+        // 初始化数据库
+        function initDatabase() {
+            window.allLenses = [...lensDatabase];
+            
+            window.dbFilters = {
+                search: '',
+                sortBy: 'model',
+                minWD: 0,
+                maxWD: Infinity
+            };
+            
+            bindDatabaseEvents();
+            applyDatabaseFilters();
+        }
+
+        // 绑定数据库事件
+        function bindDatabaseEvents() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                window.dbFilters.search = e.target.value.trim().toLowerCase();
+                applyDatabaseFilters();
+            });
+            
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                window.dbFilters.sortBy = e.target.value;
+                applyDatabaseFilters();
+            });
+            
+            // 工作距离筛选
+            document.getElementById('dbMinWD').addEventListener('input', (e) => {
+                window.dbFilters.minWD = parseFloat(e.target.value) || 0;
+                applyDatabaseFilters();
+            });
+            
+            document.getElementById('dbMaxWD').addEventListener('input', (e) => {
+                window.dbFilters.maxWD = parseFloat(e.target.value) || Infinity;
+                applyDatabaseFilters();
+            });
+        }
+
+        // 应用数据库筛选
+        function applyDatabaseFilters() {
+            const loadingEl = document.getElementById('loadingDatabase');
+            const emptyEl = document.getElementById('emptyDatabase');
+            const listEl = document.getElementById('lensList');
+            const countEl = document.getElementById('resultCount');
+            
+            loadingEl.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+            listEl.classList.add('hidden');
+            
+            setTimeout(() => {
+                let filteredLenses = [...window.allLenses];
+                
+                if (window.dbFilters.search) {
+                    const searchTerm = window.dbFilters.search;
+                    filteredLenses = filteredLenses.filter(lens => 
+                        lens.model.toLowerCase().includes(searchTerm) ||
+                        lens.focalLength.toString().includes(searchTerm) ||
+                        lens.maxAperture.toString().includes(searchTerm) ||
+                        lens.series.toLowerCase().includes(searchTerm) ||
+                        lens.mounts.some(m => m.toLowerCase().includes(searchTerm))
+                    );
+                }
+                
+                // 工作距离筛选
+                filteredLenses = filteredLenses.filter(lens => {
+                    const wd = parseFloat(lens.workingDistance);
+                    return wd >= window.dbFilters.minWD && wd <= window.dbFilters.maxWD;
+                });
+                
+                filteredLenses = sortDatabaseLenses(filteredLenses, window.dbFilters.sortBy);
+                
+                countEl.textContent = filteredLenses.length;
+                
+                if (filteredLenses.length === 0) {
+                    emptyEl.classList.remove('hidden');
+                } else {
+                    renderLensList(filteredLenses);
+                    listEl.classList.remove('hidden');
+                }
+                
+                loadingEl.classList.add('hidden');
+            }, 300);
+        }
+
+        // 数据库镜头排序
+        function sortDatabaseLenses(lenses, sortBy) {
+            return [...lenses].sort((a, b) => {
+                if (sortBy === 'model') {
+                    return a.model.localeCompare(b.model);
+                } else if (sortBy === 'focalLength') {
+                    return a.focalLength - b.focalLength;
+                } else if (sortBy === 'maxAperture') {
+                    return a.maxAperture - b.maxAperture;
+                }
+                return 0;
+            });
+        }
+
+        // 渲染镜头列表
+        function renderLensList(lenses) {
+            const listEl = document.getElementById('lensList');
+            listEl.innerHTML = '';
+            
+            lenses.forEach(lens => {
+                const card = document.createElement('div');
+                card.className = 'lens-card p-5';
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="font-bold text-lg text-blue-600">${lens.model}</h3>
+                        <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">${lens.series}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm mb-5">
+                        <div>
+                            <span class="text-gray-600 block text-xs mb-1">焦距</span>
+                            <p class="font-medium">${lens.focalLength}mm</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 block text-xs mb-1">最大光圈</span>
+                            <p class="font-medium text-blue-600">f/${lens.maxAperture}</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 block text-xs mb-1">最大像面</span>
+                            <p class="font-medium">${lens.maxImageCircle}mm</p>
+                        </div>
+                        <div>
+                            <span class="text-gray-600 block text-xs mb-1">中心倍率</span>
+                            <p class="font-medium">${lens.centerMagnification}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2 text-sm text-gray-700">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">工作距离:</span>
+                            <span>${lens.workingDistance}mm</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">安装接口:</span>
+                            <span>${lens.mounts.join(', ')}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">倍率范围:</span>
+                            <span>${lens.magnificationRange}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">工作距离范围:</span>
+                            <span>${lens.workingDistanceRange}mm</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <button onclick="viewMagnificationTable('${lens.model}')" class="w-full bg-blue-50 text-blue-600 py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-100 transition duration-200">
+                            <i class="fa fa-table mr-2"></i>查看倍率表
+                        </button>
+                    </div>
+                `;
+                
+                listEl.appendChild(card);
+            });
+        }
+
+        // 查看倍率表（从搜索结果跳转）
+        function viewMagnificationTable(lensModel) {
+            // 切换到倍率表查询标签页
+            switchTab('magnification');
+            
+            // 设置选择框的值
+            const selectEl = document.getElementById('magnificationLensSelect');
+            selectEl.value = lensModel;
+            
+            // 设置搜索框的值
+            const searchEl = document.getElementById('magnificationLensSearch');
+            searchEl.value = lensModel;
+            
+            // 显示倍率表
+            displayMagnificationTable(lensModel);
+        }
+
+        // 初始化倍率表标签页
+        function initMagnificationTab() {
+            const selectEl = document.getElementById('magnificationLensSelect');
+            const searchEl = document.getElementById('magnificationLensSearch');
+            
+            // 清空选项
+            selectEl.innerHTML = '<option value="">选择镜头型号</option>';
+            
+            // 添加有倍率表数据的镜头选项
+            Object.keys(magnificationTables).forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                selectEl.appendChild(option);
+            });
+            
+            // 选择框事件监听
+            selectEl.addEventListener('change', (e) => {
+                const model = e.target.value;
+                searchEl.value = model; // 同步搜索框
+                if (model) {
+                    displayMagnificationTable(model);
+                } else {
+                    document.getElementById('magnificationTableContainer').classList.add('hidden');
+                    document.getElementById('noMagnificationData').classList.remove('hidden');
+                }
+            });
+            
+            // 搜索框事件监听
+            searchEl.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                // 过滤选项
+                const options = selectEl.options;
+                let foundMatch = false;
+                
+                for (let i = 0; i < options.length; i++) {
+                    const option = options[i];
+                    if (option.value.toLowerCase().includes(searchTerm)) {
+                        if (!foundMatch) {
+                            selectEl.value = option.value;
+                            displayMagnificationTable(option.value);
+                            foundMatch = true;
+                        }
+                    }
+                }
+                
+                if (!foundMatch && searchTerm === '') {
+                    selectEl.value = '';
+                    document.getElementById('magnificationTableContainer').classList.add('hidden');
+                    document.getElementById('noMagnificationData').classList.remove('hidden');
+                }
+            });
+        }
+
+        // 显示倍率表
+        function displayMagnificationTable(lensModel) {
+            const tableBody = document.getElementById('magnificationTableBody');
+            const container = document.getElementById('magnificationTableContainer');
+            const noDataEl = document.getElementById('noMagnificationData');
+            
+            if (!magnificationTables[lensModel]) {
+                container.classList.add('hidden');
+                noDataEl.classList.remove('hidden');
+                return;
+            }
+            
+            const tableData = magnificationTables[lensModel];
+            
+            // 清空表格
+            tableBody.innerHTML = '';
+            
+            // 填充表格数据
+            tableData.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${row.workingDistance}</td>
+                    <td>${row.magnification}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+            
+            // 显示表格
+            container.classList.remove('hidden');
+            noDataEl.classList.add('hidden');
+            
+            // 更新图表
+            updateMagnificationChart(lensModel, tableData);
+        }
+
+        // 更新倍率图表
+        function updateMagnificationChart(lensModel, tableData) {
+            const ctx = document.getElementById('magnificationChart').getContext('2d');
+            
+            // 如果已有图表实例，先销毁
+            if (window.magnificationChart) {
+                window.magnificationChart.destroy();
+            }
+            
+            // 准备数据
+            const workingDistances = tableData.map(row => row.workingDistance);
+            const magnifications = tableData.map(row => row.magnification);
+            
+            // 创建新图表
+            window.magnificationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: workingDistances,
+                    datasets: [{
+                        label: `放大倍率 - ${lensModel}`,
+                        data: magnifications,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '工作距离与放大倍率关系图'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: '工作距离 (mm)'
+                            },
+                            reverse: true
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: '放大倍率'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载完成初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            switchTab('recommend');
+        });
+    </script>
+</body>
+</html>
